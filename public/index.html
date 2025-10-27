@@ -1,136 +1,210 @@
-<<!DOCTYPE html>
+<!DOCTYPE html>
 <html lang="pt-BR">
 <head>
-    <meta charset="UTF-8">
-    <title>Forca em Vue.js (Básico)</title>
-    <script src="https://unpkg.com/vue@3/dist/vue.global.js"></script>
-    <style>
-        body { font-family: Arial, sans-serif; text-align: center; }
-        .palavra-display { font-size: 2em; letter-spacing: 10px; margin: 30px 0; }
-        .letras-erradas { color: red; }
-        .teclado button { margin: 5px; padding: 10px; cursor: pointer; }
-    </style>
+  <meta charset="UTF-8" />
+  <title>Jogo da Forca com Animações</title>
+  <script src="https://unpkg.com/vue@3/dist/vue.global.js"></script>
+  <style>
+    body { 
+      font-family: Arial, sans-serif; 
+      text-align: center; 
+      padding: 20px; 
+      overflow: hidden;
+      background-color: #fff;
+      transition: background-color 1s ease;
+    }
+
+    .palavra-display { 
+      font-size: 2em; 
+      letter-spacing: 10px; 
+      margin: 30px 0; 
+    }
+
+    .letras-erradas { color: red; }
+    .teclado button { margin: 5px; padding: 10px 12px; cursor: pointer; }
+    .teclado { margin-bottom: 16px; }
+    .info { margin: 10px 0; }
+
+    svg { width: 180px; height: 220px; margin: 10px auto; display: block; }
+    line, circle { stroke: black; stroke-width: 3; fill: none; }
+
+    /* Confete */
+    .confete {
+      position: fixed;
+      width: 10px;
+      height: 10px;
+      background-color: var(--color, red);
+      top: 0;
+      left: 50%;
+      opacity: 0.9;
+      border-radius: 2px;
+      animation: cair 3s linear forwards;
+    }
+
+    @keyframes cair {
+      0% { transform: translate(var(--x, 0), -20px) rotate(0deg); }
+      100% { transform: translate(var(--x, 0), 100vh) rotate(720deg); opacity: 0; }
+    }
+
+    /* Sangue escorrendo */
+    .sangue {
+      position: fixed;
+      top: 0;
+      width: 4px;
+      height: 0;
+      background: red;
+      left: var(--x, 50%);
+      animation: escorrer 2s forwards ease-in;
+    }
+
+    @keyframes escorrer {
+      to {
+        height: 100vh;
+        opacity: 0.2;
+      }
+    }
+  </style>
 </head>
 <body>
 
-
 <div id="app">
-    <h1>Jogo da Forca</h1>
+  <h1>Jogo da Forca</h1>
 
+  <!-- Desenho do boneco -->
+  <svg viewBox="0 0 120 150">
+    <line x1="10" y1="140" x2="100" y2="140" /> <!-- base -->
+    <line x1="30" y1="20" x2="30" y2="140" />   <!-- poste -->
+    <line x1="30" y1="20" x2="80" y2="20" />    <!-- topo -->
+    <line x1="80" y1="20" x2="80" y2="40" />    <!-- corda -->
 
-    <div class="palavra-display">
-        {{ palavraAdivinhada }}
-    </div>
+    <circle v-if="erros >= 1" cx="80" cy="50" r="10" />
+    <line v-if="erros >= 2" x1="80" y1="60" x2="80" y2="90" />
+    <line v-if="erros >= 3" x1="80" y1="70" x2="70" y2="80" />
+    <line v-if="erros >= 4" x1="80" y1="70" x2="90" y2="80" />
+    <line v-if="erros >= 5" x1="80" y1="90" x2="70" y2="110" />
+    <line v-if="erros >= 6" x1="80" y1="90" x2="90" y2="110" />
+  </svg>
 
+  <div class="palavra-display">{{ palavraAdivinhada }}</div>
 
-    <p v-if="errosMaximos">Você perdeu! A palavra era: <strong>{{ palavraSecreta }}</strong></p>
-    <p v-else-if="vitoria">Parabéns! Você venceu!</p>
-    <p v-else>
-        Tentativas restantes: <strong>{{ tentativasRestantes }}</strong>
-    </p>
+  <p v-if="errosMaximos" class="info">
+    Você perdeu! A palavra era: <strong>{{ palavraSecretaOriginal }}</strong>
+  </p>
+  <p v-else-if="vitoria" class="info">🎉 Parabéns! Você venceu! 🎉</p>
+  <p v-else class="info">Tentativas restantes: <strong>{{ tentativasRestantes }}</strong></p>
 
+  <div v-if="!jogoAcabou" class="teclado">
+    <button
+      v-for="letra in alfabeto"
+      :key="letra"
+      @click="adivinhar(letra)"
+      :disabled="letrasTentadas.includes(letra)">
+      {{ letra }}
+    </button>
+  </div>
 
-    <div v-if="!jogoAcabou" class="teclado">
-        <button
-            v-for="letra in alfabeto"
-            :key="letra"
-            @click="adivinhar(letra)"
-            :disabled="letrasTentadas.includes(letra)">
-            {{ letra }}
-        </button>
-    </div>
+  <p>Letras erradas:
+    <span class="letras-erradas">{{ letrasErradas.join(', ') }}</span>
+  </p>
 
-
-    <p>Letras erradas:
-        <span class="letras-erradas">{{ letrasErradas.join(', ') }}</span>
-    </p>
-   
-    <button @click="iniciarJogo">Reiniciar Jogo</button>
-
-
+  <button @click="iniciarJogo">Reiniciar Jogo</button>
 </div>
 
-
 <script>
-    const ForcaApp = {
-        data() {
-            return {
-                palavras: ['PontoVirgula', 'informatica', 'CTI', 'ecommerce', 'Caderno'],
-                palavraSecreta: '',
-                letrasTentadas: [],
-                maxErros: 6,
-                alfabeto: Array.from('ABCDEFGHIJKLMNOPQRSTUVWXYZ') // Cria um array de A a Z
-            };
-        },
-        computed: {
-            erros() {
-                return this.letrasTentadas.filter(letra =>
-                    !this.palavraSecreta.includes(letra)
-                ).length;
-            },
-           
-            tentativasRestantes() {
-                return this.maxErros - this.erros;
-            },
-
-
-            errosMaximos() {
-                return this.erros >= this.maxErros;
-            },
-
-
-            palavraAdivinhada() {
-                return this.palavraSecreta.split('').map(letra => {
-                    return this.letrasTentadas.includes(letra) ? letra : '_';
-                }).join(' ');
-            },
-
-
-            vitoria() {
-                return !this.palavraAdivinhada.includes('_') && this.palavraSecreta.length > 0;
-            },
-
-
-   
-            jogoAcabou() {
-                return this.errosMaximos || this.vitoria;
-            },
-           
-
-            letrasErradas() {
-                return this.letrasTentadas.filter(letra =>
-                    !this.palavraSecreta.includes(letra)
-                );
-            }
-        },
-
-
-        methods: {
-            iniciarJogo() {
-                const indice = Math.floor(Math.random() * this.palavras.length);
-                this.palavraSecreta = this.palavras[indice];
-                this.letrasTentadas = []; 
-            },
-
-
-            adivinhar(letra) {
-                if (!this.letrasTentadas.includes(letra) && !this.jogoAcabou) {
-                    this.letrasTentadas.push(letra);
-                }
-            }
-        },
-       
-        mounted() {
-            this.iniciarJogo();
-        }
+const ForcaApp = {
+  data() {
+    return {
+      palavras: ['Ponto e Vírgula', 'Informática', 'CTI', 'E-commerce', 'Caderno', 'Capivara', 'Sagui', 'Brasil', 'Escola', 'Universidade', 'Linguagem', 'Professor', 'Livro', 'Computador', 'Musical', 'Trânsito'],
+      palavraSecretaOriginal: '',
+      palavraSecreta: '',
+      letrasTentadas: [],
+      maxErros: 6,
+      alfabeto: Array.from('ABCDEFGHIJKLMNOPQRSTUVWXYZ')
     };
+  },
+  computed: {
+    erros() {
+      return this.letrasTentadas.filter(letra => 
+        !this.palavraSecreta.includes(letra)
+      ).length;
+    },
+    tentativasRestantes() {
+      return this.maxErros - this.erros;
+    },
+    errosMaximos() {
+      return this.erros >= this.maxErros;
+    },
+    palavraAdivinhada() {
+      return this.palavraSecretaOriginal.split('').map(char => {
+        const normal = this._normalizar(char);
+        if (!/[A-Z0-9]/i.test(normal)) return char;
+        return this.letrasTentadas.includes(normal) ? char : '_';
+      }).join(' ');
+    },
+    vitoria() {
+      return !this.palavraAdivinhada.includes('_') && this.palavraSecreta.length > 0;
+    },
+    jogoAcabou() {
+      return this.errosMaximos || this.vitoria;
+    },
+    letrasErradas() {
+      return this.letrasTentadas.filter(letra => 
+        !this.palavraSecreta.includes(letra)
+      );
+    }
+  },
+  methods: {
+    _normalizar(texto) {
+      return texto.normalize('NFD').replace(/[\u0300-\u036f]/g, '').toUpperCase();
+    },
+    iniciarJogo() {
+      document.body.style.backgroundColor = '#fff';
+      this._limparEfeitos();
+      const indice = Math.floor(Math.random() * this.palavras.length);
+      const original = this.palavras[indice];
+      this.palavraSecretaOriginal = original;
+      this.palavraSecreta = this._normalizar(original);
+      this.letrasTentadas = [];
+    },
+    adivinhar(letra) {
+      const letraNorm = this._normalizar(letra);
+      if (!this.letrasTentadas.includes(letraNorm) && !this.jogoAcabou) {
+        this.letrasTentadas.push(letraNorm);
+        if (this.vitoria) this._confete();
+        if (this.errosMaximos) this._sangue();
+      }
+    },
+    _confete() {
+      for (let i = 0; i < 100; i++) {
+        const c = document.createElement('div');
+        c.className = 'confete';
+        c.style.setProperty('--x', `${(Math.random() - 0.5) * 100}vw`);
+        c.style.setProperty('--color', `hsl(${Math.random() * 360}, 80%, 60%)`);
+        document.body.appendChild(c);
+        setTimeout(() => c.remove(), 3000);
+      }
+    },
+    _sangue() {
+      document.body.style.backgroundColor = '#ffe5e5';
+      for (let i = 0; i < 20; i++) {
+        const s = document.createElement('div');
+        s.className = 'sangue';
+        s.style.setProperty('--x', `${Math.random() * 100}vw`);
+        document.body.appendChild(s);
+        setTimeout(() => s.remove(), 2000);
+      }
+    },
+    _limparEfeitos() {
+      document.querySelectorAll('.confete, .sangue').forEach(el => el.remove());
+    }
+  },
+  mounted() {
+    this.iniciarJogo();
+  }
+};
 
-
-    Vue.createApp(ForcaApp).mount('#app');
+Vue.createApp(ForcaApp).mount('#app');
 </script>
-
 
 </body>
 </html>
-
-
