@@ -1,206 +1,348 @@
 <!DOCTYPE html>
 <html lang="pt-BR">
 <head>
-  <meta charset="UTF-8" />
-  <title>Jogo da Forca com Animações</title>
-  <script src="https://unpkg.com/vue@3/dist/vue.global.js"></script>
-  <style>
-    body { 
-      font-family: Arial, sans-serif; 
-      text-align: center; 
-      padding: 20px; 
-      overflow: hidden;
-      background-color: #fff;
-      transition: background-color 1s ease;
-    }
+    <meta charset="UTF-8" />
+    <meta name="viewport" content="width=device-width, initial-scale=1.0">
+    <title>Jogo da Forca Ponto&Vírgula</title>
+    <script src="https://unpkg.com/vue@3/dist/vue.global.js"></script>
+    <script src="https://cdn.tailwindcss.com"></script>
+    <style>
+        @import url('https://fonts.googleapis.com/css2?family=Inter:wght@400;700;900&display=swap');
+        
+        body {
+            font-family: 'Inter', sans-serif;
+            background-color: #d9e3e4;
+            color: #235699;
+            display: flex;
+            justify-content: center;
+            align-items: center;
+            min-height: 100vh;
+            margin: 0;
+            padding: 20px;
+            transition: background-color 1s ease;
+            overflow-x: hidden;
+        }
 
-    .palavra-display { 
-      font-size: 2em; 
-      letter-spacing: 10px; 
-      margin: 30px 0; 
-    }
+        #app {
+            background-color: #fae5e5;
+            border: 8px solid #c9e0ff;
+            border-radius: 20px;
+            padding: 30px;
+            box-shadow: 0 10px 25px rgba(0, 0, 0, 0.2);
+            max-width: 95%;
+            width: 600px;
+            text-align: center;
+        }
 
-    .letras-erradas { color: red; }
-    .teclado button { margin: 5px; padding: 10px 12px; cursor: pointer; }
-    .teclado { margin-bottom: 16px; }
-    .info { margin: 10px 0; }
+        h1 {
+            font-size: 2.8rem;
+            font-weight: 900;
+            color: #235699;
+            margin-bottom: 20px;
+            text-shadow: 2px 2px 4px rgba(0, 0, 0, 0.2);
+        }
 
-    svg { width: 180px; height: 220px; margin: 10px auto; display: block; }
-    line, circle { stroke: black; stroke-width: 3; fill: none; }
+        .palavra-display {
+            font-size: 2.5rem;
+            letter-spacing: 6px;
+            margin: 30px 0;
+            font-weight: 700;
+            color: #235699;
+            white-space: normal;
+            word-break: break-all;
+            overflow-x: hidden;
+            padding-bottom: 5px;
+            line-height: 1.2;
+        }
+        .palavra-display::-webkit-scrollbar, .palavra-display {
+            scrollbar-width: none;
+            -ms-overflow-style: none;
+        }
+        .palavra-display::-webkit-scrollbar {
+            display: none;
+        }
+        
+        svg { 
+            width: 180px; 
+            height: 220px; 
+            margin: 10px auto; 
+            display: block; 
+        }
+        line, circle { 
+            stroke: #235699;
+            stroke-width: 4; 
+            fill: none; 
+            transition: opacity 0.3s ease; 
+        }
 
-    /* Confete */
-    .confete {
-      position: fixed;
-      width: 10px;
-      height: 10px;
-      background-color: var(--color, red);
-      top: 0;
-      left: 50%;
-      opacity: 0.9;
-      border-radius: 2px;
-      animation: cair 3s linear forwards;
-    }
+        .teclado button {
+            transition: all 0.2s ease;
+            font-weight: bold;
+            border-radius: 8px;
+            background-color: #b87286;
+            color: #fff;
+            padding: 10px 14px;
+            margin: 4px;
+            cursor: pointer;
+            border: 2px solid #edc263;
+            box-shadow: 0 4px #a16474;
+            transform: translateY(0);
+        }
 
-    @keyframes cair {
-      0% { transform: translate(var(--x, 0), -20px) rotate(0deg); }
-      100% { transform: translate(var(--x, 0), 100vh) rotate(720deg); opacity: 0; }
-    }
+        .teclado button:hover:not(:disabled) {
+            background-color: #edc263;
+            box-shadow: 0 2px #b87286;
+            transform: translateY(2px);
+        }
 
-    /* Sangue escorrendo */
-    .sangue {
-      position: fixed;
-      top: 0;
-      width: 4px;
-      height: 0;
-      background: red;
-      left: var(--x, 50%);
-      animation: escorrer 2s forwards ease-in;
-    }
+        .teclado button:disabled {
+            cursor: not-allowed;
+            background-color: #a16474;
+            color: #e0e0e0;
+            opacity: 0.7;
+            box-shadow: none;
+        }
+        
+        .letras-erradas { 
+            color: #ff6f90;
+            font-weight: 700;
+            letter-spacing: 2px;
+        }
 
-    @keyframes escorrer {
-      to {
-        height: 100vh;
-        opacity: 0.2;
-      }
-    }
-  </style>
+        .reiniciar-btn {
+            background-color: #ffc700;
+            color: #235699;
+            font-weight: 700;
+            padding: 12px 24px;
+            border-radius: 9999px;
+            margin-top: 20px;
+            cursor: pointer;
+            border: none;
+            box-shadow: 0 4px #e0af00;
+            transition: all 0.2s;
+        }
+
+        .reiniciar-btn:hover {
+            background-color: #e0af00;
+            box-shadow: 0 2px #c29800;
+            transform: translateY(2px);
+        }
+
+        .info {
+            font-size: 1.25rem;
+            font-weight: bold;
+            margin-bottom: 15px;
+            color: #235699;
+        }
+        .info strong {
+            color: #235699;
+        }
+        .info.text-red-400 {
+            color: #ff6f90;
+        }
+        .info.text-green-400 {
+            color: #ffc700;
+        }
+        .info strong.text-yellow-400 {
+            color: #ffc700;
+        }
+        .info strong.text-orange-400 {
+            color: #edc263;
+        }
+
+
+        .confete {
+            position: fixed;
+            width: 10px;
+            height: 10px;
+            background-color: var(--color, red);
+            top: -10px;
+            left: 50%;
+            opacity: 0.9;
+            border-radius: 2px;
+            animation: cair 3s linear forwards;
+            z-index: 1000;
+        }
+
+        @keyframes cair {
+            0% { transform: translate(var(--x, 0), -20px) rotate(0deg); }
+            100% { transform: translate(var(--x, 0), 100vh) rotate(720deg); opacity: 0; }
+        }
+
+        .sangue {
+            position: fixed;
+            top: 0;
+            width: 4px;
+            height: 0;
+            background: rgba(255, 111, 144, 0.7);
+            left: var(--x, 50%);
+            animation: escorrer 2s forwards ease-in;
+            z-index: 1000;
+        }
+        
+        @keyframes escorrer {
+            to {
+                height: 100vh;
+                opacity: 0.1;
+            }
+        }
+    </style>
 </head>
 <body>
 
 <div id="app">
-  <h1>Jogo da Forca</h1>
+    <h1>Jogo da Forca</h1>
 
-  <!-- Desenho do boneco -->
-  <svg viewBox="0 0 120 150">
-    <line x1="10" y1="140" x2="100" y2="140" /> <!-- base -->
-    <line x1="30" y1="20" x2="30" y2="140" />   <!-- poste -->
-    <line x1="30" y1="20" x2="80" y2="20" />    <!-- topo -->
-    <line x1="80" y1="20" x2="80" y2="40" />    <!-- corda -->
+    <svg viewBox="0 0 120 150">
+        <line x1="10" y1="140" x2="100" y2="140" />
+        <line x1="30" y1="20" x2="30" y2="140" />
+        <line x1="30" y1="20" x2="80" y2="20" />
+        <line x1="80" y1="20" x2="80" y2="40" />
+        <circle v-if="erros >= 1" cx="80" cy="50" r="10" />
+        <line v-if="erros >= 2" x1="80" y1="60" x2="80" y2="90" />
+        <line v-if="erros >= 3" x1="80" y1="70" x2="70" y2="80" />
+        <line v-if="erros >= 4" x1="80" y1="70" x2="90" y2="80" />
+        <line v-if="erros >= 5" x1="80" y1="90" x2="70" y2="110" />
+        <line v-if="erros >= 6" x1="80" y1="90" x2="90" y2="110" />
+    </svg>
 
-    <circle v-if="erros >= 1" cx="80" cy="50" r="10" />
-    <line v-if="erros >= 2" x1="80" y1="60" x2="80" y2="90" />
-    <line v-if="erros >= 3" x1="80" y1="70" x2="70" y2="80" />
-    <line v-if="erros >= 4" x1="80" y1="70" x2="90" y2="80" />
-    <line v-if="erros >= 5" x1="80" y1="90" x2="70" y2="110" />
-    <line v-if="erros >= 6" x1="80" y1="90" x2="90" y2="110" />
-  </svg>
+    <div class="palavra-display">{{ palavraAdivinhada }}</div>
 
-  <div class="palavra-display">{{ palavraAdivinhada }}</div>
+    <p v-if="errosMaximos" class="info text-red-400">
+        Você perdeu! A palavra era: <strong>{{ palavraSecretaOriginal }}</strong>
+    </p>
+    <p v-else-if="vitoria" class="info text-green-400 animate-pulse">🎉 Parabéns! Você venceu! 🎉</p>
+    <p v-else class="info text-lg">
+        Tentativas restantes: 
+        <strong :class="{'text-yellow-400': tentativasRestantes < 3, 'text-orange-400': tentativasRestantes >= 3}">
+            {{ tentativasRestantes }}
+        </strong>
+    </p>
 
-  <p v-if="errosMaximos" class="info">
-    Você perdeu! A palavra era: <strong>{{ palavraSecretaOriginal }}</strong>
-  </p>
-  <p v-else-if="vitoria" class="info">🎉 Parabéns! Você venceu! 🎉</p>
-  <p v-else class="info">Tentativas restantes: <strong>{{ tentativasRestantes }}</strong></p>
+    <div v-if="!jogoAcabou" class="teclado max-w-xl mx-auto flex flex-wrap justify-center">
+        <button
+            v-for="letra in alfabeto"
+            :key="letra"
+            @click="adivinhar(letra)"
+            :disabled="letrasTentadas.includes(letra)">
+            {{ letra }}
+        </button>
+    </div>
 
-  <div v-if="!jogoAcabou" class="teclado">
-    <button
-      v-for="letra in alfabeto"
-      :key="letra"
-      @click="adivinhar(letra)"
-      :disabled="letrasTentadas.includes(letra)">
-      {{ letra }}
-    </button>
-  </div>
+    <p class="mt-4 text-lg">Letras erradas:
+        <span class="letras-erradas">{{ letrasErradas.join(', ') }}</span>
+    </p>
 
-  <p>Letras erradas:
-    <span class="letras-erradas">{{ letrasErradas.join(', ') }}</span>
-  </p>
-
-  <button @click="iniciarJogo">Reiniciar Jogo</button>
+    <button @click="iniciarJogo" class="reiniciar-btn">Reiniciar Jogo</button>
 </div>
 
 <script>
 const ForcaApp = {
-  data() {
-    return {
-      palavras: ['Ponto e Vírgula', 'Informática', 'CTI', 'E-commerce', 'Caderno', 'Capivara', 'Sagui', 'Brasil', 'Escola', 'Universidade', 'Linguagem', 'Professor', 'Livro', 'Computador', 'Musical', 'Trânsito'],
-      palavraSecretaOriginal: '',
-      palavraSecreta: '',
-      letrasTentadas: [],
-      maxErros: 6,
-      alfabeto: Array.from('ABCDEFGHIJKLMNOPQRSTUVWXYZ')
-    };
-  },
-  computed: {
-    erros() {
-      return this.letrasTentadas.filter(letra => 
-        !this.palavraSecreta.includes(letra)
-      ).length;
+    data() {
+        return {
+            palavras: [
+                'PONTO E VÍRGULA', 'CTI', 'INFORMÁTICA', 'SAGUI', 
+                'FRONT-END', 'BACK-END', 'E-COMMERCE'
+            ],
+            palavraSecretaOriginal: '',
+            palavraSecreta: '',
+            letrasTentadas: [],
+            maxErros: 6,
+            alfabeto: Array.from('ABCDEFGHIJKLMNOPQRSTUVWXYZ')
+        };
     },
-    tentativasRestantes() {
-      return this.maxErros - this.erros;
+    computed: {
+        erros() {
+            return this.letrasTentadas.filter(letra => 
+                !this.palavraSecreta.includes(letra)
+            ).length;
+        },
+        tentativasRestantes() {
+            return this.maxErros - this.erros;
+        },
+        errosMaximos() {
+            return this.erros >= this.maxErros;
+        },
+        palavraAdivinhada() {
+            return this.palavraSecretaOriginal.split('').map(char => {
+                const normal = this._normalizar(char);
+                // Testa se é espaço ou hífen. Se for, retorna o caractere original.
+                if (char === ' ' || char === '-') return char;
+                // Se for letra ou número, verifica se foi tentada.
+                if (!/[A-Z0-9]/i.test(normal)) return char; 
+                return this.letrasTentadas.includes(normal) ? char : '_';
+            }).join(' ');
+        },
+        vitoria() {
+            return !this.palavraAdivinhada.includes('_') && this.palavraSecreta.length > 0;
+        },
+        jogoAcabou() {
+            return this.errosMaximos || this.vitoria;
+        },
+        letrasErradas() {
+            return this.letrasTentadas.filter(letra => 
+                !this.palavraSecreta.includes(letra)
+            );
+        }
     },
-    errosMaximos() {
-      return this.erros >= this.maxErros;
+    methods: {
+        _normalizar(texto) {
+            if (!texto) return '';
+            return texto.normalize('NFD').replace(/[\u0300-\u036f]/g, '').toUpperCase();
+        },
+        iniciarJogo() {
+            document.body.style.backgroundColor = '#d9e3e4';
+            this._limparEfeitos();
+            
+            const indice = Math.floor(Math.random() * this.palavras.length);
+            const original = this.palavras[indice];
+            
+            this.palavraSecretaOriginal = original;
+            // Remove espaços e hífens da palavra secreta normalizada para o sistema de adivinhação
+            this.palavraSecreta = this._normalizar(original).replace(/[\s-]/g, '');
+            this.letrasTentadas = [];
+        },
+        adivinhar(letra) {
+            const letraNorm = this._normalizar(letra);
+            if (!this.letrasTentadas.includes(letraNorm) && !this.jogoAcabou) {
+                this.letrasTentadas.push(letraNorm);
+                
+                this.$nextTick(() => {
+                    if (this.vitoria) {
+                        this._confete();
+                    } else if (this.errosMaximos) {
+                        this._sangue();
+                    }
+                });
+            }
+        },
+        _confete() {
+            for (let i = 0; i < 100; i++) {
+                const c = document.createElement('div');
+                c.className = 'confete';
+                c.style.setProperty('--x', `${(Math.random() - 0.5) * 80}vw`); 
+                c.style.setProperty('--color', `hsl(${Math.random() * 360}, 80%, 60%)`);
+                document.body.appendChild(c);
+                setTimeout(() => c.remove(), 3000);
+            }
+        },
+        _sangue() {
+            document.body.style.backgroundColor = '#f0e0e0';
+            for (let i = 0; i < 20; i++) {
+                const s = document.createElement('div');
+                s.className = 'sangue';
+                s.style.setProperty('--x', `${Math.random() * 100}vw`);
+                document.body.appendChild(s);
+                setTimeout(() => s.remove(), 2000);
+            }
+        },
+        _limparEfeitos() {
+            document.querySelectorAll('.confete, .sangue').forEach(el => el.remove());
+        }
     },
-    palavraAdivinhada() {
-      return this.palavraSecretaOriginal.split('').map(char => {
-        const normal = this._normalizar(char);
-        if (!/[A-Z0-9]/i.test(normal)) return char;
-        return this.letrasTentadas.includes(normal) ? char : '_';
-      }).join(' ');
-    },
-    vitoria() {
-      return !this.palavraAdivinhada.includes('_') && this.palavraSecreta.length > 0;
-    },
-    jogoAcabou() {
-      return this.errosMaximos || this.vitoria;
-    },
-    letrasErradas() {
-      return this.letrasTentadas.filter(letra => 
-        !this.palavraSecreta.includes(letra)
-      );
+    mounted() {
+        this.iniciarJogo();
     }
-  },
-  methods: {
-    _normalizar(texto) {
-      return texto.normalize('NFD').replace(/[\u0300-\u036f]/g, '').toUpperCase();
-    },
-    iniciarJogo() {
-      document.body.style.backgroundColor = '#fff';
-      this._limparEfeitos();
-      const indice = Math.floor(Math.random() * this.palavras.length);
-      const original = this.palavras[indice];
-      this.palavraSecretaOriginal = original;
-      this.palavraSecreta = this._normalizar(original);
-      this.letrasTentadas = [];
-    },
-    adivinhar(letra) {
-      const letraNorm = this._normalizar(letra);
-      if (!this.letrasTentadas.includes(letraNorm) && !this.jogoAcabou) {
-        this.letrasTentadas.push(letraNorm);
-        if (this.vitoria) this._confete();
-        if (this.errosMaximos) this._sangue();
-      }
-    },
-    _confete() {
-      for (let i = 0; i < 100; i++) {
-        const c = document.createElement('div');
-        c.className = 'confete';
-        c.style.setProperty('--x', `${(Math.random() - 0.5) * 100}vw`);
-        c.style.setProperty('--color', `hsl(${Math.random() * 360}, 80%, 60%)`);
-        document.body.appendChild(c);
-        setTimeout(() => c.remove(), 3000);
-      }
-    },
-    _sangue() {
-      document.body.style.backgroundColor = '#ffe5e5';
-      for (let i = 0; i < 20; i++) {
-        const s = document.createElement('div');
-        s.className = 'sangue';
-        s.style.setProperty('--x', `${Math.random() * 100}vw`);
-        document.body.appendChild(s);
-        setTimeout(() => s.remove(), 2000);
-      }
-    },
-    _limparEfeitos() {
-      document.querySelectorAll('.confete, .sangue').forEach(el => el.remove());
-    }
-  },
-  mounted() {
-    this.iniciarJogo();
-  }
 };
 
 Vue.createApp(ForcaApp).mount('#app');
